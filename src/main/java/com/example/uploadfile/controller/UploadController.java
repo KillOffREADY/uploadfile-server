@@ -8,12 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,15 +39,17 @@ public class UploadController {
     }
 
     @GetMapping("/files")
-    public List<String> getAllFiles(Model model) {
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public List<String> getAllFiles() {
         List<String> fileNames = files.stream()
                 .map(file -> MvcUriComponentsBuilder
                         .fromMethodName(UploadController.class, "getFile", file).build().toString())
                 .collect(Collectors.toList());
         return fileNames;
     }
-//
+
     @GetMapping("/files/{filename:.+}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Resource> getFile(@PathVariable String filename) {
         Resource resource = storage.getFile(filename);
         return ResponseEntity.ok()
@@ -56,6 +58,7 @@ public class UploadController {
     }
 
     @PostMapping("/files")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
         String message;
         storage.store(file);
@@ -65,6 +68,7 @@ public class UploadController {
     }
 
     @PostMapping("/files/employee")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public Person savePersonImage(@ModelAttribute PersonDTO personDTO) {
         String path = "http://localhost:8080/files/";
         System.out.println(personDTO.getFile().getOriginalFilename());
@@ -76,6 +80,7 @@ public class UploadController {
     }
 
     @GetMapping("/files/person")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<Person> getAllPersons() {
         return repository.findAll();
     }
